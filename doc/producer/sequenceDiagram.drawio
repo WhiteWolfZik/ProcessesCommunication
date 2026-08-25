@@ -1,0 +1,34 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="seq_producer" name="Producer - one packet write iteration">
+    <mxGraphModel dx="1400" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1300" pageHeight="800" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="Producer: one packet write iteration" style="text;align=left;fontStyle=1;fontSize=16;" vertex="1" parent="1"><mxGeometry x="20" y="0" width="700" height="30" as="geometry"/></mxCell>
+        <mxCell id="app" value="ProducerApplication" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="20" y="40" width="220" height="40" as="geometry"/></mxCell>
+        <mxCell id="gen" value="RandomPayloadGenerator" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="280" y="40" width="220" height="40" as="geometry"/></mxCell>
+        <mxCell id="chk" value="ChecksumCalculator" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="540" y="40" width="200" height="40" as="geometry"/></mxCell>
+        <mxCell id="ring" value="SharedRingBuffer" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="780" y="40" width="200" height="40" as="geometry"/></mxCell>
+        <mxCell id="futex" value="FutexGate" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="1"><mxGeometry x="1020" y="40" width="160" height="40" as="geometry"/></mxCell>
+        <mxCell id="ll_app" style="endArrow=none;dashed=1;html=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="130" y="80" as="sourcePoint"/><mxPoint x="130" y="740" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="ll_gen" style="endArrow=none;dashed=1;html=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="390" y="80" as="sourcePoint"/><mxPoint x="390" y="740" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="ll_chk" style="endArrow=none;dashed=1;html=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="640" y="80" as="sourcePoint"/><mxPoint x="640" y="740" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="ll_ring" style="endArrow=none;dashed=1;html=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="880" y="80" as="sourcePoint"/><mxPoint x="880" y="740" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="ll_futex" style="endArrow=none;dashed=1;html=1;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="1100" y="80" as="sourcePoint"/><mxPoint x="1100" y="740" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="m1" value="1: generate(payloadSize)" style="html=1;endArrow=block;endFill=1;rounded=0;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="130" y="120" as="sourcePoint"/><mxPoint x="390" y="120" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="m2" value="2: return payload[]" style="html=1;endArrow=open;endFill=0;dashed=1;rounded=0;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="390" y="170" as="sourcePoint"/><mxPoint x="130" y="170" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="note1" value="build PacketHeader:&#10;sequenceNumber = seq++&#10;timestampNs = now()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;spacing=6;fontSize=11;" vertex="1" parent="1"><mxGeometry x="20" y="195" width="220" height="55" as="geometry"/></mxCell>
+        <mxCell id="m3" value="3: compute(header, payload)" style="html=1;endArrow=block;endFill=1;rounded=0;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="130" y="280" as="sourcePoint"/><mxPoint x="640" y="280" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="m4" value="4: return checksum" style="html=1;endArrow=open;endFill=0;dashed=1;rounded=0;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="640" y="330" as="sourcePoint"/><mxPoint x="130" y="330" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="m5" value="5: publish(header, payload)" style="html=1;endArrow=block;endFill=1;rounded=0;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="130" y="380" as="sourcePoint"/><mxPoint x="880" y="380" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="note2" value="slot = writeIndex % capacity&#10;seqlock: version++ (odd)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;spacing=6;fontSize=11;" vertex="1" parent="1"><mxGeometry x="770" y="405" width="220" height="45" as="geometry"/></mxCell>
+        <mxCell id="note3" value="memcpy(header + payload -&gt; slot)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;spacing=6;fontSize=11;" vertex="1" parent="1"><mxGeometry x="770" y="460" width="220" height="35" as="geometry"/></mxCell>
+        <mxCell id="note4" value="seqlock: version++ (even)&#10;writeIndex.store(release)&#10;(overwrite-oldest if full)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;spacing=6;fontSize=11;" vertex="1" parent="1"><mxGeometry x="770" y="505" width="220" height="55" as="geometry"/></mxCell>
+        <mxCell id="m6" value="6: wake()" style="html=1;endArrow=block;endFill=1;rounded=0;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="880" y="590" as="sourcePoint"/><mxPoint x="1100" y="590" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="note5" value="futex(FUTEX_WAKE, &amp;writeIndex)&#10;(only if consumer may be sleeping)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;spacing=6;fontSize=11;" vertex="1" parent="1"><mxGeometry x="990" y="615" width="230" height="45" as="geometry"/></mxCell>
+        <mxCell id="m7" value="7: return" style="html=1;endArrow=open;endFill=0;dashed=1;rounded=0;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="1100" y="670" as="sourcePoint"/><mxPoint x="880" y="670" as="targetPoint"/></mxGeometry></mxCell>
+        <mxCell id="m8" value="8: return (published)" style="html=1;endArrow=open;endFill=0;dashed=1;rounded=0;fontSize=11;" edge="1" parent="1"><mxGeometry relative="1" as="geometry"><mxPoint x="880" y="710" as="sourcePoint"/><mxPoint x="130" y="710" as="targetPoint"/></mxGeometry></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

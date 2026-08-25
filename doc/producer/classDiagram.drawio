@@ -1,0 +1,105 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="MQgKiosyRFJWI2a9Tt3R" name="Producer - Class Diagram">
+    <mxGraphModel dx="1664" dy="934" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="G-xLbGHclfzpztFJUPI_-1" connectable="0" parent="1" style="group" value="" vertex="1">
+          <mxGeometry height="861" width="1130" x="170" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="G-xLbGHclfzpztFJUPI_-2" parent="G-xLbGHclfzpztFJUPI_-1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#ffe6cc;strokeColor=#d79b00;" value="ProducerApplication" vertex="1">
+          <mxGeometry height="190" width="280" x="558" as="geometry" />
+        </mxCell>
+        <mxCell id="G-xLbGHclfzpztFJUPI_-3" parent="G-xLbGHclfzpztFJUPI_-2" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" value="- options: CliOptions&#xa;- generator: RandomPayloadGenerator&#xa;- buffer: SharedRingBuffer&#xa;- signals: SignalController&#xa;- sequenceCounter: uint64_t&#xa;&#xa;+ run(): int" vertex="1">
+          <mxGeometry height="160" width="280" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="G-xLbGHclfzpztFJUPI_-4" parent="G-xLbGHclfzpztFJUPI_-1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="CliOptions" vertex="1">
+          <mxGeometry height="150" width="220" y="511" as="geometry" />
+        </mxCell>
+        <mxCell id="G-xLbGHclfzpztFJUPI_-5" parent="G-xLbGHclfzpztFJUPI_-4" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" value="- payloadSize: size_t&#xa;- ringBufferBytes: size_t = 64MB&#xa;&#xa;+ parse(argc, argv): CliOptions&#xa;+ payloadSize() const: size_t&#xa;+ ringBufferBytes() const: size_t" vertex="1">
+          <mxGeometry height="120" width="220" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="G-xLbGHclfzpztFJUPI_-6" parent="G-xLbGHclfzpztFJUPI_-1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="RandomPayloadGenerator" vertex="1">
+          <mxGeometry height="110" width="240" x="100" y="351" as="geometry" />
+        </mxCell>
+        <mxCell id="G-xLbGHclfzpztFJUPI_-7" parent="G-xLbGHclfzpztFJUPI_-6" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" value="- rng: std::mt19937_64&#xa;&#xa;+ generate(size): vector&lt;uint8_t&gt;" vertex="1">
+          <mxGeometry height="80" width="240" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="G-xLbGHclfzpztFJUPI_-8" parent="G-xLbGHclfzpztFJUPI_-1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="ChecksumCalculator" vertex="1">
+          <mxGeometry height="100" width="240" x="580" y="371" as="geometry" />
+        </mxCell>
+        <mxCell id="G-xLbGHclfzpztFJUPI_-9" parent="G-xLbGHclfzpztFJUPI_-8" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" value="+ compute(header, payload): uint32_t  {static}" vertex="1">
+          <mxGeometry height="70" width="240" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="G-xLbGHclfzpztFJUPI_-10" parent="G-xLbGHclfzpztFJUPI_-1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="SignalController" vertex="1">
+          <mxGeometry height="150" width="260" x="850" y="291" as="geometry" />
+        </mxCell>
+        <mxCell id="G-xLbGHclfzpztFJUPI_-11" parent="G-xLbGHclfzpztFJUPI_-10" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" value="- paused: atomic&lt;bool&gt;&#xa;&#xa;+ install(): void&#xa;+ waitWhilePaused(): void&#xa;- handlePause(sig): void  {static}&#xa;- handleResume(sig): void  {static}" vertex="1">
+          <mxGeometry height="120" width="260" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="G-xLbGHclfzpztFJUPI_-12" parent="G-xLbGHclfzpztFJUPI_-1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="SharedRingBuffer" vertex="1">
+          <mxGeometry height="200" width="280" x="258" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="G-xLbGHclfzpztFJUPI_-13" parent="G-xLbGHclfzpztFJUPI_-12" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" value="- shmFd: int&#xa;- slots: Slot*&#xa;- capacity: size_t  (derived)&#xa;- writeIndex: atomic&lt;uint64_t&gt;&#xa;- readIndex: atomic&lt;uint64_t&gt;&#xa;- gate: FutexGate&#xa;&#xa;+ open(name, ringBufferBytes): void&#xa;+ publish(header, payload): void" vertex="1">
+          <mxGeometry height="170" width="280" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="G-xLbGHclfzpztFJUPI_-14" parent="G-xLbGHclfzpztFJUPI_-1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="FutexGate" vertex="1">
+          <mxGeometry height="120" width="220" x="288" y="741" as="geometry" />
+        </mxCell>
+        <mxCell id="G-xLbGHclfzpztFJUPI_-15" parent="G-xLbGHclfzpztFJUPI_-14" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" value="- futexWord: atomic&lt;uint32_t&gt;*&#xa;&#xa;+ wait(expected): void&#xa;+ wake(): void" vertex="1">
+          <mxGeometry height="90" width="220" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="G-xLbGHclfzpztFJUPI_-16" parent="G-xLbGHclfzpztFJUPI_-1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=40;fillColor=#f8cecc;strokeColor=#b85450;" value="&lt;&lt;struct&gt;&gt;&#xa;PacketHeader" vertex="1">
+          <mxGeometry height="150" width="240" x="690" y="555" as="geometry" />
+        </mxCell>
+        <mxCell id="G-xLbGHclfzpztFJUPI_-17" parent="G-xLbGHclfzpztFJUPI_-16" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" value="- sequenceNumber: uint64_t&#xa;- timestampNs: uint64_t&#xa;- payloadSize: uint32_t&#xa;- checksum: uint32_t" vertex="1">
+          <mxGeometry height="110" width="240" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="G-xLbGHclfzpztFJUPI_-18" edge="1" parent="G-xLbGHclfzpztFJUPI_-1" source="G-xLbGHclfzpztFJUPI_-3" style="html=1;startArrow=diamondThin;startFill=1;endArrow=none;rounded=0;exitX=0.066;exitY=1.001;entryX=0.5;entryY=0;edgeStyle=orthogonalEdgeStyle;exitDx=0;exitDy=0;exitPerimeter=0;" target="G-xLbGHclfzpztFJUPI_-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="576.47" y="231.06" />
+              <mxPoint x="30" y="231.06" />
+              <mxPoint x="30" y="491.06" />
+              <mxPoint x="110" y="491.06" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="G-xLbGHclfzpztFJUPI_-19" edge="1" parent="G-xLbGHclfzpztFJUPI_-1" source="G-xLbGHclfzpztFJUPI_-3" style="html=1;startArrow=diamondThin;startFill=1;endArrow=none;rounded=0;exitX=0.25;exitY=1;entryX=0.5;entryY=0;edgeStyle=orthogonalEdgeStyle;exitDx=0;exitDy=0;" target="G-xLbGHclfzpztFJUPI_-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="G-xLbGHclfzpztFJUPI_-20" edge="1" parent="G-xLbGHclfzpztFJUPI_-1" source="G-xLbGHclfzpztFJUPI_-3" style="html=1;endArrow=open;dashed=1;rounded=0;entryX=0.5;entryY=0;edgeStyle=orthogonalEdgeStyle;exitX=0.655;exitY=1.023;exitDx=0;exitDy=0;exitPerimeter=0;" target="G-xLbGHclfzpztFJUPI_-8">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="740" y="193.65" />
+              <mxPoint x="740" y="342" />
+              <mxPoint x="700" y="342" />
+            </Array>
+            <mxPoint x="743" y="190" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="G-xLbGHclfzpztFJUPI_-21" edge="1" parent="G-xLbGHclfzpztFJUPI_-1" source="G-xLbGHclfzpztFJUPI_-2" style="html=1;startArrow=diamondThin;startFill=1;endArrow=none;rounded=0;exitX=0.75;exitY=1;entryX=0.5;entryY=0;edgeStyle=orthogonalEdgeStyle;exitDx=0;exitDy=0;" target="G-xLbGHclfzpztFJUPI_-10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="G-xLbGHclfzpztFJUPI_-22" edge="1" parent="G-xLbGHclfzpztFJUPI_-1" source="G-xLbGHclfzpztFJUPI_-3" style="html=1;startArrow=diamondThin;startFill=1;endArrow=none;rounded=0;exitX=0.5;exitY=1;entryX=0.5;entryY=0;edgeStyle=orthogonalEdgeStyle;exitDx=0;exitDy=0;" target="G-xLbGHclfzpztFJUPI_-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="G-xLbGHclfzpztFJUPI_-23" edge="1" parent="G-xLbGHclfzpztFJUPI_-1" source="G-xLbGHclfzpztFJUPI_-13" style="html=1;startArrow=diamondThin;startFill=1;endArrow=none;rounded=0;exitX=0.5;exitY=1;entryX=0.5;entryY=0;edgeStyle=orthogonalEdgeStyle;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" target="G-xLbGHclfzpztFJUPI_-14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="G-xLbGHclfzpztFJUPI_-24" edge="1" parent="G-xLbGHclfzpztFJUPI_-1" source="G-xLbGHclfzpztFJUPI_-12" style="html=1;endArrow=open;dashed=1;rounded=0;exitX=1;exitY=0.6;entryX=0;entryY=0.3;edgeStyle=orthogonalEdgeStyle;" target="G-xLbGHclfzpztFJUPI_-16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="G-xLbGHclfzpztFJUPI_-25" edge="1" parent="G-xLbGHclfzpztFJUPI_-1" source="G-xLbGHclfzpztFJUPI_-2" style="html=1;endArrow=open;dashed=1;rounded=0;exitX=1;exitY=0.7;entryX=0.5;entryY=0;edgeStyle=orthogonalEdgeStyle;" target="G-xLbGHclfzpztFJUPI_-16">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1130" y="133" />
+              <mxPoint x="1130" y="511" />
+              <mxPoint x="810" y="511" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
