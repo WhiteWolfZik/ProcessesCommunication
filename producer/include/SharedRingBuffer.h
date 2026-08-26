@@ -1,6 +1,5 @@
 #pragma once
 
-#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -8,13 +7,32 @@
 #include <span>
 #include <string>
 
+#include "FutexGate.h"
 #include "PacketHeader.h"
+#include "RingBufferLayout.h"
 
 namespace producer
 {
 
 class SharedRingBuffer
 {
+	//
+	// Construction and destruction.
+	//
+public:
+	//! Constructor.
+	SharedRingBuffer() = default;
+	//! Destructor.
+	~SharedRingBuffer();
+	//! Copy constructor.
+	SharedRingBuffer(const SharedRingBuffer&) = delete;
+	//! Copy assignment operator.
+	SharedRingBuffer& operator=(const SharedRingBuffer&) = delete;
+	//! Move constructor.
+	SharedRingBuffer(SharedRingBuffer&&) = delete;
+	//! Move assignment operator.
+	SharedRingBuffer& operator=(SharedRingBuffer&&) = delete;
+
 	//
 	// Public interface.
 	//
@@ -31,16 +49,16 @@ public:
 	// Private data members.
 	//
 private:
-	//! File descriptor of the shared memory segment.
-	std::int32_t shmFd_{ -1 };
-	//! Mapped slot array, reassigned once open() maps the segment.
+	//! Name of the shared memory segment, used to shm_unlink it on destruction.
+	std::string name_;
+	//! Whole mapped region, including the control block; empty until open() succeeds.
+	std::span<std::byte> mapping_;
+	//! Control block, bound once open() maps the segment.
+	std::optional<std::reference_wrapper<common::RingBufferControlBlock>> control_;
+	//! Slot array, i.e. mapping_ after the control block.
 	std::span<std::byte> slots_;
-	//! Number of slots, derived from ringBufferBytes / slotSize.
-	std::size_t capacity_{ 0 };
-	//! Shared write index, bound once open() maps the segment.
-	std::optional<std::reference_wrapper<std::atomic<std::uint64_t>>> writeIndex_;
-	//! Shared read index, bound once open() maps the segment.
-	std::optional<std::reference_wrapper<std::atomic<std::uint64_t>>> readIndex_;
+	//! Wakes a waiting Consumer; bound to control_->notify once open() maps the segment.
+	std::optional<common::FutexGate> gate_;
 };
 
 }	 // namespace producer
