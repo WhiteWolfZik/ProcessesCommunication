@@ -1,6 +1,5 @@
 #pragma once
 
-#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -9,7 +8,9 @@
 #include <string>
 #include <vector>
 
+#include "FutexGate.h"
 #include "PacketHeader.h"
+#include "RingBufferLayout.h"
 
 namespace consumer
 {
@@ -23,10 +24,28 @@ struct Packet
 	std::vector<std::uint8_t> payload;
 };
 
-//! Attaches to the shared-memory segment created by Producer. Implementation
-//! lands in a dedicated stage; this is currently a skeleton (declarations only).
+//! Attaches to the shared-memory segment created by Producer and reads
+//! packets out of it. Never creates or unlinks the segment — that is
+//! Producer's responsibility.
 class SharedRingBufferReader
 {
+	//
+	// Construction and destruction.
+	//
+public:
+	//! Constructor.
+	SharedRingBufferReader() = default;
+	//! Destructor.
+	~SharedRingBufferReader();
+	//! Copy constructor.
+	SharedRingBufferReader(const SharedRingBufferReader&) = delete;
+	//! Copy assignment operator.
+	SharedRingBufferReader& operator=(const SharedRingBufferReader&) = delete;
+	//! Move constructor.
+	SharedRingBufferReader(SharedRingBufferReader&&) = delete;
+	//! Move assignment operator.
+	SharedRingBufferReader& operator=(SharedRingBufferReader&&) = delete;
+
 	//
 	// Public interface.
 	//
@@ -40,16 +59,15 @@ public:
 	// Private data members.
 	//
 private:
-	//! File descriptor of the shared memory segment.
-	std::int32_t shmFd_{ -1 };
-	//! Mapped slot array, reassigned once attach() maps the segment.
-	std::span<std::byte> slots_;
-	//! Number of slots in the ring buffer.
-	std::size_t capacity_{ 0 };
-	//! Shared write index, bound once attach() maps the segment.
-	std::optional<std::reference_wrapper<std::atomic<std::uint64_t>>> writeIndex_;
-	//! Shared read index, bound once attach() maps the segment.
-	std::optional<std::reference_wrapper<std::atomic<std::uint64_t>>> readIndex_;
+	//! Whole mapped region, including the control block; empty until attach() succeeds.
+	std::span<std::byte> mapping_;
+	//! Control block, bound once attach() maps the segment.
+	std::optional<std::reference_wrapper<common::RingBufferControlBlock>> control_;
+	//! Slot array, i.e. mapping_ after the control block. Read-only from this
+	//! side: Consumer only ever copies slot bytes out, never writes into them.
+	std::span<const std::byte> slots_;
+	//! Waits for Producer to publish; bound to control_->notify once attach() maps the segment.
+	std::optional<common::FutexGate> gate_;
 };
 
 }	 // namespace consumer
