@@ -43,6 +43,15 @@ bool SignalController::isStopRequested() const
 	return stopRequested_.load(std::memory_order_acquire);
 }
 
+void SignalController::togglePause() const
+{
+	bool expected{ paused_.load(std::memory_order_acquire) };
+	while (!paused_.compare_exchange_weak(
+		expected, !expected, std::memory_order_acq_rel, std::memory_order_acquire))
+	{
+	}
+}
+
 void SignalController::handlePause([[maybe_unused]] const int signalNumber)
 {
 	paused_.store(true, std::memory_order_release);

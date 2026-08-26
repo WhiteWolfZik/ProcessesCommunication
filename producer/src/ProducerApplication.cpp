@@ -28,12 +28,14 @@ std::uint64_t nowNanoseconds()
 
 ProducerApplication::ProducerApplication(CliOptions options)
 	: options_{ std::move(options) }
+	, keypress_{ signals_ }
 {
 }
 
 int ProducerApplication::run()
 {
 	signals_.install();
+	keypress_.start();
 	buffer_.open(
 		std::string{ common::ringBufferLayout::segmentName },
 		options_.ringBufferBytes(),
@@ -59,6 +61,7 @@ int ProducerApplication::run()
 		buffer_.publish(header, std::span<const std::uint8_t>(payload));
 	}
 
+	keypress_.stop();
 	return 0;
 }
 

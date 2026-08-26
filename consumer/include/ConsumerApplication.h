@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CliOptions.h"
+#include "KeypressListener.h"
 #include "PacketValidator.h"
 #include "SharedRingBufferReader.h"
 #include "SignalController.h"
@@ -40,6 +41,8 @@ private:
 	StatsCollector stats_;
 	//! Pause/resume signal handling.
 	common::SignalController signals_;
+	//! Pause/resume via keypress, sharing signals_'s pause flag.
+	common::KeypressListener keypress_;
 	//! Background statistics printer.
 	StatsReporterThread reporterThread_;
 };

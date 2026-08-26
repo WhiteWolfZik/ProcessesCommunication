@@ -24,6 +24,9 @@ public:
 	bool isPaused() const;
 	//! Returns whether a graceful shutdown has been requested.
 	bool isStopRequested() const;
+	//! Flips the pause flag; used by KeypressListener as a signal-free alternative to
+	//! SIGUSR1/SIGUSR2.
+	void togglePause() const;
 
 	//
 	// Private methods.

@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include "CliOptions.h"
+#include "KeypressListener.h"
 #include "RandomPayloadGenerator.h"
 #include "SharedRingBuffer.h"
 #include "SignalController.h"
@@ -38,6 +39,8 @@ private:
 	SharedRingBuffer buffer_;
 	//! Pause/resume signal handling.
 	common::SignalController signals_;
+	//! Pause/resume via keypress, sharing signals_'s pause flag.
+	common::KeypressListener keypress_;
 	//! Next sequence number to assign to a published packet.
 	std::uint64_t sequenceCounter_{ 0 };
 };
