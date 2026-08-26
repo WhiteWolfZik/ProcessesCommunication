@@ -3,6 +3,7 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include <string_view>
 
 #include "PacketHeader.h"
 
@@ -38,6 +39,9 @@ struct alignas(8) SlotHeader
 
 namespace ringBufferLayout
 {
+
+//! POSIX shared memory object name both Producer and Consumer attach to.
+constexpr std::string_view segmentName{ "/processes_communication_ring_buffer" };
 
 constexpr std::size_t alignmentBytes{ 8 };
 
