@@ -11,6 +11,13 @@ endif()
 
 add_compile_options(-Wall -Wextra -Wpedantic)
 
+option(BUILD_TESTING "Build unit tests" ON)
+
 add_subdirectory(common)
 add_subdirectory(producer)
 add_subdirectory(consumer)
+
+if(BUILD_TESTING)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
