@@ -1,6 +1,7 @@
 add_library(common STATIC
     src/ChecksumCalculator.cpp
     src/FutexGate.cpp
+    src/KeypressListener.cpp
     src/SignalController.cpp
 )
 
