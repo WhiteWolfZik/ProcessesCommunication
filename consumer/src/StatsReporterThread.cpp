@@ -54,6 +54,7 @@ void StatsReporterThread::run()
 
 		std::cout << "total=" << current.totalPackets << " invalid=" << current.invalidPackets
 				  << " packets/sec=" << packetsPerSec << " bytes/sec=" << bytesPerSec << '\n';
+		std::cout.flush();
 
 		lastSnapshot_ = current;
 	}
