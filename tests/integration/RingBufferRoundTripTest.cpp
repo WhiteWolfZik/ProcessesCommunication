@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <csignal>
 #include <cstdint>
 #include <span>
 #include <string>
@@ -15,6 +16,8 @@
 #include "RingBufferLayout.h"
 #include "SharedRingBuffer.h"
 #include "SharedRingBufferReader.h"
+#include "SignalController.h"
+#include "TestSignalController.h"
 
 namespace
 {
@@ -44,7 +47,9 @@ TEST(RingBufferRoundTripTest, BasicSequentialPublishAndConsume)
 	producer::SharedRingBuffer writer;
 	writer.open(name, ringBufferBytes, payloadSize);
 	consumer::SharedRingBufferReader reader;
-	reader.attach(name);
+	tests::TestSignalController::resetForTesting();
+	common::SignalController signals;
+	ASSERT_TRUE(reader.attach(name, signals));
 
 	constexpr std::uint64_t packetCount{ 20 };
 	for (std::uint64_t sequenceNumber{ 0 }; sequenceNumber < packetCount; ++sequenceNumber)
@@ -84,7 +89,9 @@ TEST(RingBufferRoundTripTest, OverwriteOldestBurstKeepsSurvivingDataIntact)
 	producer::SharedRingBuffer writer;
 	writer.open(name, ringBufferBytes, payloadSize);
 	consumer::SharedRingBufferReader reader;
-	reader.attach(name);
+	tests::TestSignalController::resetForTesting();
+	common::SignalController signals;
+	ASSERT_TRUE(reader.attach(name, signals));
 
 	constexpr std::uint64_t burstCount{ 20 };
 	for (std::uint64_t sequenceNumber{ 0 }; sequenceNumber < burstCount; ++sequenceNumber)
@@ -148,7 +155,9 @@ TEST(RingBufferRoundTripTest, ConcurrentWriterAndReaderNeverProduceTornReads)
 	producer::SharedRingBuffer writer;
 	writer.open(name, ringBufferBytes, payloadSize);
 	consumer::SharedRingBufferReader reader;
-	reader.attach(name);
+	tests::TestSignalController::resetForTesting();
+	common::SignalController signals;
+	ASSERT_TRUE(reader.attach(name, signals));
 
 	std::thread producerThread([&writer]() {
 		for (std::uint64_t sequenceNumber{ 0 }; sequenceNumber < publishCount; ++sequenceNumber)
@@ -200,10 +209,11 @@ TEST(RingBufferRoundTripTest, ReaderAttachRetriesUntilProducerCreatesSegment)
 	constexpr std::uint64_t ringBufferBytes{ 64 * 1024 };
 
 	consumer::SharedRingBufferReader reader;
+	tests::TestSignalController::resetForTesting();
+	common::SignalController signals;
 	std::atomic<bool> attached{ false };
 	std::thread attachThread([&]() {
-		reader.attach(name);
-		attached.store(true, std::memory_order_release);
+		attached.store(reader.attach(name, signals), std::memory_order_release);
 	});
 
 	std::this_thread::sleep_for(std::chrono::milliseconds(250));
@@ -214,4 +224,35 @@ TEST(RingBufferRoundTripTest, ReaderAttachRetriesUntilProducerCreatesSegment)
 
 	attachThread.join();
 	EXPECT_TRUE(attached.load(std::memory_order_acquire));
+}
+
+/*
+ * Brief: attach() never even starts retrying once a stop has already been
+ *        requested — this is what lets Ctrl-C interrupt a consumer that is
+ *        still waiting for a producer to appear, instead of the retry loop
+ *        ignoring the signal forever.
+ * Given: A SignalController with a stop already requested (forced via
+ *        raise(SIGTERM), which is safe regardless of whatever state earlier
+ *        tests left the shared stop flag in, since it only ever moves
+ *        false -> true) and a segment name that is never created.
+ * When:  attach() is called against that segment.
+ * Then:  It returns false immediately, without waiting through even one
+ *        retry interval.
+ */
+TEST(RingBufferRoundTripTest, ReaderAttachAbortsWhenStopAlreadyRequested)
+{
+	const auto name{ makeSegmentName("AttachAbort") };
+
+	common::SignalController signals;
+	signals.install();
+	::raise(SIGTERM);
+	ASSERT_TRUE(signals.isStopRequested());
+
+	consumer::SharedRingBufferReader reader;
+	const auto start{ std::chrono::steady_clock::now() };
+	const auto result{ reader.attach(name, signals) };
+	const auto elapsed{ std::chrono::steady_clock::now() - start };
+
+	EXPECT_FALSE(result);
+	EXPECT_LT(elapsed, std::chrono::milliseconds(50));
 }
