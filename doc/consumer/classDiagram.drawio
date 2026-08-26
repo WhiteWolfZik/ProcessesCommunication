@@ -1,42 +1,190 @@
 <mxfile host="app.diagrams.net">
-  <diagram id="consumer_class_diagram" name="Consumer - Class Diagram">
-    <mxGraphModel dx="1500" dy="950" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1550" pageHeight="1000" math="0" shadow="0">
+  <diagram id="4nkakm46uLL0zkTBDpmv" name="Consumer - Class Diagram">
+    <mxGraphModel dx="2828" dy="1588" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
-        <mxCell id="0"/>
-        <mxCell id="1" parent="0"/>
-        <mxCell id="app" value="ConsumerApplication" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1"><mxGeometry x="620" y="0" width="280" height="220" as="geometry"/></mxCell>
-        <mxCell id="app_body" value="- options: CliOptions&#10;- reader: SharedRingBufferReader&#10;- validator: PacketValidator&#10;- stats: StatsCollector&#10;- reporterThread: StatsReporterThread&#10;- signals: SignalController&#10;&#10;+ run(): int" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" vertex="1" parent="app"><mxGeometry y="30" width="280" height="190" as="geometry"/></mxCell>
-        <mxCell id="validator" value="PacketValidator" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="40" y="280" width="240" height="110" as="geometry"/></mxCell>
-        <mxCell id="validator_body" value="- lastSequenceNumber: uint64_t&#10;&#10;+ validate(header, payload): ValidationResult" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" vertex="1" parent="validator"><mxGeometry y="30" width="240" height="80" as="geometry"/></mxCell>
-        <mxCell id="chk" value="ChecksumCalculator" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="320" y="280" width="240" height="100" as="geometry"/></mxCell>
-        <mxCell id="chk_body" value="+ compute(header, payload): uint32_t  {static}" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" vertex="1" parent="chk"><mxGeometry y="30" width="240" height="70" as="geometry"/></mxCell>
-        <mxCell id="collector" value="StatsCollector" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="600" y="280" width="260" height="170" as="geometry"/></mxCell>
-        <mxCell id="collector_body" value="- totalPackets: atomic&lt;uint64_t&gt;&#10;- totalBytes: atomic&lt;uint64_t&gt;&#10;- invalidPackets: atomic&lt;uint64_t&gt;&#10;&#10;+ record(bytes, valid): void&#10;+ snapshot() const: StatsSnapshot" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" vertex="1" parent="collector"><mxGeometry y="30" width="260" height="140" as="geometry"/></mxCell>
-        <mxCell id="reporter" value="StatsReporterThread" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="900" y="280" width="290" height="250" as="geometry"/></mxCell>
-        <mxCell id="reporter_body" value="- collector: StatsCollector&amp;&#10;- signals: SignalController&amp;&#10;- intervalSeconds: unsigned&#10;- thread: std::thread&#10;- running: atomic&lt;bool&gt;&#10;- lastSnapshot: StatsSnapshot&#10;&#10;+ start(): void&#10;+ stop(): void&#10;- run(): void  {thread body}" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" vertex="1" parent="reporter"><mxGeometry y="30" width="290" height="220" as="geometry"/></mxCell>
-        <mxCell id="sig" value="SignalController" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="1230" y="280" width="260" height="150" as="geometry"/></mxCell>
-        <mxCell id="sig_body" value="- paused: atomic&lt;bool&gt;&#10;&#10;+ install(): void&#10;+ isPaused() const: bool&#10;- handlePause(sig): void  {static}&#10;- handleResume(sig): void  {static}" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" vertex="1" parent="sig"><mxGeometry y="30" width="260" height="120" as="geometry"/></mxCell>
-        <mxCell id="reader" value="SharedRingBufferReader" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="40" y="580" width="280" height="220" as="geometry"/></mxCell>
-        <mxCell id="reader_body" value="- shmFd: int&#10;- slots: Slot*&#10;- capacity: size_t&#10;- writeIndex: atomic&lt;uint64_t&gt;*&#10;- readIndex: atomic&lt;uint64_t&gt;*&#10;- gate: FutexGate&#10;&#10;+ attach(name): void  {retries until segment exists}&#10;+ tryConsume(): optional&lt;Packet&gt;" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" vertex="1" parent="reader"><mxGeometry y="30" width="280" height="190" as="geometry"/></mxCell>
-        <mxCell id="cli" value="CliOptions" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1"><mxGeometry x="360" y="580" width="250" height="120" as="geometry"/></mxCell>
-        <mxCell id="cli_body" value="- reportIntervalSeconds: unsigned = 1&#10;&#10;+ parse(argc, argv): CliOptions&#10;+ reportIntervalSeconds() const: unsigned" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" vertex="1" parent="cli"><mxGeometry y="30" width="250" height="90" as="geometry"/></mxCell>
-        <mxCell id="hdr" value="&lt;&lt;struct&gt;&gt;&#10;PacketHeader" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=40;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1"><mxGeometry x="650" y="580" width="240" height="150" as="geometry"/></mxCell>
-        <mxCell id="hdr_body" value="- sequenceNumber: uint64_t&#10;- timestampNs: uint64_t&#10;- payloadSize: uint32_t&#10;- checksum: uint32_t" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" vertex="1" parent="hdr"><mxGeometry y="40" width="240" height="110" as="geometry"/></mxCell>
-        <mxCell id="futex" value="FutexGate" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1"><mxGeometry x="40" y="840" width="220" height="120" as="geometry"/></mxCell>
-        <mxCell id="futex_body" value="- futexWord: atomic&lt;uint32_t&gt;*&#10;&#10;+ wait(expected, timeout): void&#10;+ wake(): void" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" vertex="1" parent="futex"><mxGeometry y="30" width="220" height="90" as="geometry"/></mxCell>
-        <mxCell id="e1" style="html=1;startArrow=diamondThin;startFill=1;endArrow=none;rounded=0;exitX=0.2;exitY=1;entryX=0.5;entryY=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="app" target="cli"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e2" style="html=1;startArrow=diamondThin;startFill=1;endArrow=none;rounded=0;exitX=0.1;exitY=1;entryX=0.5;entryY=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="app" target="reader"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e3" style="html=1;startArrow=diamondThin;startFill=1;endArrow=none;rounded=0;exitX=0.3;exitY=1;entryX=0.5;entryY=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="app" target="validator"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e4" style="html=1;startArrow=diamondThin;startFill=1;endArrow=none;rounded=0;exitX=0.5;exitY=1;entryX=0.5;entryY=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="app" target="collector"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e5" style="html=1;startArrow=diamondThin;startFill=1;endArrow=none;rounded=0;exitX=0.7;exitY=1;entryX=0.5;entryY=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="app" target="reporter"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e6" style="html=1;startArrow=diamondThin;startFill=1;endArrow=none;rounded=0;exitX=0.9;exitY=1;entryX=0.5;entryY=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="app" target="sig"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e7" style="html=1;startArrow=diamondThin;startFill=1;endArrow=none;rounded=0;exitX=0.3;exitY=1;entryX=0.5;entryY=0;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="reader" target="futex"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e8" style="html=1;endArrow=open;dashed=1;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="validator" target="chk"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e9" style="html=1;endArrow=open;dashed=1;rounded=0;exitX=1;exitY=0.7;entryX=0;entryY=0.3;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="validator" target="hdr"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e10" style="html=1;endArrow=open;dashed=1;rounded=0;exitX=1;exitY=0.3;entryX=0;entryY=0.7;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="reader" target="hdr"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e11" style="html=1;endArrow=open;dashed=1;rounded=0;exitX=0;exitY=0.5;entryX=1;entryY=0.5;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="reporter" target="collector"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="e12" style="html=1;endArrow=open;dashed=1;rounded=0;exitX=1;exitY=0.5;entryX=0;entryY=0.5;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="reporter" target="sig"><mxGeometry relative="1" as="geometry"/></mxCell>
-        <mxCell id="legend" value="filled diamond = composition (owns)      dashed arrow = dependency / association (uses, reads, calls statically)" style="text;align=left;fontStyle=2;fontSize=11;" vertex="1" parent="1"><mxGeometry x="40" y="970" width="800" height="20" as="geometry"/></mxCell>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-1" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#ffe6cc;strokeColor=#d79b00;" value="ConsumerApplication" vertex="1">
+          <mxGeometry height="230" width="320" x="804" y="223" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-2" parent="gNa3Diuc_Gz6c6CkLnG0-1" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" value="- options_: CliOptions&#xa;- reader_: SharedRingBufferReader&#xa;- validator_: PacketValidator&#xa;- stats_: StatsCollector&#xa;- signals_: SignalController&#xa;- keypress_: KeypressListener&#xa;- reporterThread_: StatsReporterThread&#xa;&#xa;+ run(): int" vertex="1">
+          <mxGeometry height="200" width="320" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-3" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="CliOptions" vertex="1">
+          <mxGeometry height="110" width="260" x="30" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-4" parent="gNa3Diuc_Gz6c6CkLnG0-3" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" value="- reportInterval_: chrono::seconds&#xa;&#xa;+ parse(argc, argv): CliOptions  {static}&#xa;+ reportInterval() const: chrono::seconds" vertex="1">
+          <mxGeometry height="80" width="260" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-5" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="SharedRingBufferReader" vertex="1">
+          <mxGeometry height="190" width="320" x="1430" y="348" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-6" parent="gNa3Diuc_Gz6c6CkLnG0-5" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" value="- mapping_: span&lt;byte&gt;&#xa;- control_: optional&lt;reference_wrapper&lt;RingBufferControlBlock&gt;&gt;&#xa;- slots_: span&lt;const byte&gt;&#xa;- gate_: optional&lt;FutexGate&gt;&#xa;&#xa;+ attach(name, signals): bool  {retries until segment exists or stop requested}&#xa;+ tryConsume(): optional&lt;Packet&gt;" vertex="1">
+          <mxGeometry height="160" width="320" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-7" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=40;fillColor=#f8cecc;strokeColor=#b85450;" value="&lt;&lt;struct&gt;&gt;&#xa;Packet" vertex="1">
+          <mxGeometry height="110" width="240" x="1990" y="783" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-8" parent="gNa3Diuc_Gz6c6CkLnG0-7" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" value="+ header: PacketHeader&#xa;+ payload: vector&lt;uint8_t&gt;" vertex="1">
+          <mxGeometry height="70" width="240" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-9" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="PacketValidator" vertex="1">
+          <mxGeometry height="110" width="260" x="420" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-10" parent="gNa3Diuc_Gz6c6CkLnG0-9" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" value="- lastSequenceNumber_: uint64_t&#xa;- hasSeenPacket_: bool&#xa;&#xa;+ validate(header, payload): ValidationResult" vertex="1">
+          <mxGeometry height="80" width="260" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-11" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="StatsCollector" vertex="1">
+          <mxGeometry height="170" width="280" x="10" y="488" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-12" parent="gNa3Diuc_Gz6c6CkLnG0-11" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" value="- totalPackets_: atomic&lt;uint64_t&gt;&#xa;- totalBytes_: atomic&lt;uint64_t&gt;&#xa;- invalidPackets_: atomic&lt;uint64_t&gt;&#xa;&#xa;+ record(bytes, valid): void&#xa;+ snapshot() const: StatsSnapshot" vertex="1">
+          <mxGeometry height="140" width="280" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-13" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="StatsReporterThread" vertex="1">
+          <mxGeometry height="220" width="300" x="264" y="763" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-14" parent="gNa3Diuc_Gz6c6CkLnG0-13" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" value="- collector_: const StatsCollector&amp;&#xa;- signals_: const SignalController&amp;&#xa;- interval_: chrono::seconds&#xa;- running_: atomic&lt;bool&gt;&#xa;- thread_: thread&#xa;- lastSnapshot_: StatsSnapshot&#xa;&#xa;+ start(): void&#xa;+ stop(): void&#xa;- run(): void  {thread body}" vertex="1">
+          <mxGeometry height="190" width="300" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-15" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="SignalController" vertex="1">
+          <mxGeometry height="220" width="300" x="850" y="763" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-16" parent="gNa3Diuc_Gz6c6CkLnG0-15" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" value="# paused_: atomic&lt;bool&gt;  {static}&#xa;# stopRequested_: atomic&lt;bool&gt;  {static}&#xa;&#xa;+ install() const&#xa;+ isPaused() const: bool&#xa;+ isStopRequested() const: bool&#xa;+ togglePause() const&#xa;- handlePause(sig): void  {static}&#xa;- handleResume(sig): void  {static}&#xa;- handleStop(sig): void  {static}" vertex="1">
+          <mxGeometry height="190" width="300" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-17" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="KeypressListener" vertex="1">
+          <mxGeometry height="200" width="300" x="1210" y="773" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-18" parent="gNa3Diuc_Gz6c6CkLnG0-17" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" value="- signals_: const SignalController&amp;&#xa;- originalTermios_: termios&#xa;- running_: atomic&lt;bool&gt;&#xa;- thread_: thread&#xa;&#xa;+ start(): void  {raw mode + spawns thread}&#xa;+ stop(): void&#xa;- run(): void  {thread body, poll(stdin)}" vertex="1">
+          <mxGeometry height="170" width="300" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-19" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#d5e8d4;strokeColor=#82b366;" value="FutexGate" vertex="1">
+          <mxGeometry height="120" width="260" x="1820" y="383" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-20" parent="gNa3Diuc_Gz6c6CkLnG0-19" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" value="- futexWord_: const atomic&lt;uint32_t&gt;&amp;&#xa;&#xa;+ wait(expected, timeout = nullopt) const&#xa;+ wake(count = 1) const" vertex="1">
+          <mxGeometry height="90" width="260" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-21" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="ChecksumCalculator" vertex="1">
+          <mxGeometry height="90" width="240" x="650" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-22" parent="gNa3Diuc_Gz6c6CkLnG0-21" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" value="+ compute(header, payload): uint32_t  {static}" vertex="1">
+          <mxGeometry height="60" width="240" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-23" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=40;fillColor=#f8cecc;strokeColor=#b85450;" value="&lt;&lt;struct&gt;&gt;&#xa;PacketHeader" vertex="1">
+          <mxGeometry height="150" width="260" x="370" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-24" parent="gNa3Diuc_Gz6c6CkLnG0-23" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" value="+ sequenceNumber: uint64_t&#xa;+ timestampNs: uint64_t&#xa;+ payloadSize: uint32_t&#xa;+ checksum: uint32_t" vertex="1">
+          <mxGeometry height="110" width="260" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-25" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=40;fillColor=#f8cecc;strokeColor=#b85450;" value="&lt;&lt;struct&gt;&gt;&#xa;RingBufferControlBlock" vertex="1">
+          <mxGeometry height="170" width="300" x="1670" y="783" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-26" parent="gNa3Diuc_Gz6c6CkLnG0-25" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" value="+ writeIndex: atomic&lt;uint64_t&gt;&#xa;+ readIndex: atomic&lt;uint64_t&gt;&#xa;+ notify: atomic&lt;uint32_t&gt;  {futex word}&#xa;+ capacity: uint64_t&#xa;+ payloadSize: uint32_t" vertex="1">
+          <mxGeometry height="130" width="300" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-27" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;startSize=40;fillColor=#f8cecc;strokeColor=#b85450;" value="&lt;&lt;struct&gt;&gt;&#xa;SlotHeader" vertex="1">
+          <mxGeometry height="90" width="220" x="2250" y="783" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-28" parent="gNa3Diuc_Gz6c6CkLnG0-27" style="text;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;overflow=hidden;" value="+ version: atomic&lt;uint32_t&gt;  {seqlock}" vertex="1">
+          <mxGeometry height="50" width="220" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-29" edge="1" parent="1" source="gNa3Diuc_Gz6c6CkLnG0-1" style="html=1;startArrow=diamondThin;startFill=1;endArrow=none;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0;exitY=0.25;exitDx=0;exitDy=0;" target="gNa3Diuc_Gz6c6CkLnG0-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-30" edge="1" parent="1" source="gNa3Diuc_Gz6c6CkLnG0-2" style="html=1;startArrow=diamondThin;startFill=1;endArrow=none;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=1.005;exitY=0.281;exitDx=0;exitDy=0;exitPerimeter=0;" target="gNa3Diuc_Gz6c6CkLnG0-5">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1277" y="309.14" />
+              <mxPoint x="1590" y="310" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-31" edge="1" parent="1" source="gNa3Diuc_Gz6c6CkLnG0-2" style="html=1;startArrow=diamondThin;startFill=1;endArrow=none;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0;exitY=0.75;exitDx=0;exitDy=0;" target="gNa3Diuc_Gz6c6CkLnG0-9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-32" edge="1" parent="1" source="gNa3Diuc_Gz6c6CkLnG0-2" style="html=1;startArrow=diamondThin;startFill=1;endArrow=none;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0;exitY=0.25;exitDx=0;exitDy=0;" target="gNa3Diuc_Gz6c6CkLnG0-11">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="550" y="303.06" />
+              <mxPoint x="550" y="320" />
+              <mxPoint x="150" y="320" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-33" edge="1" parent="1" source="gNa3Diuc_Gz6c6CkLnG0-1" style="html=1;startArrow=diamondThin;startFill=1;endArrow=none;rounded=0;edgeStyle=orthogonalEdgeStyle;" target="gNa3Diuc_Gz6c6CkLnG0-15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-34" edge="1" parent="1" source="gNa3Diuc_Gz6c6CkLnG0-1" style="html=1;startArrow=diamondThin;startFill=1;endArrow=none;rounded=0;edgeStyle=orthogonalEdgeStyle;" target="gNa3Diuc_Gz6c6CkLnG0-17">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-35" edge="1" parent="1" source="gNa3Diuc_Gz6c6CkLnG0-1" style="html=1;startArrow=diamondThin;startFill=1;endArrow=none;rounded=0;edgeStyle=orthogonalEdgeStyle;" target="gNa3Diuc_Gz6c6CkLnG0-13">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="350" y="338" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-36" edge="1" parent="1" source="gNa3Diuc_Gz6c6CkLnG0-5" style="html=1;startArrow=diamondThin;startFill=1;endArrow=none;rounded=0;edgeStyle=orthogonalEdgeStyle;" target="gNa3Diuc_Gz6c6CkLnG0-19">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-37" edge="1" parent="1" source="gNa3Diuc_Gz6c6CkLnG0-5" style="html=1;endArrow=open;dashed=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" target="gNa3Diuc_Gz6c6CkLnG0-25">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1650" y="740" />
+              <mxPoint x="1820" y="740" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-38" edge="1" parent="1" source="gNa3Diuc_Gz6c6CkLnG0-5" style="html=1;endArrow=open;dashed=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" target="gNa3Diuc_Gz6c6CkLnG0-27">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1650" y="740" />
+              <mxPoint x="2360" y="740" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-39" edge="1" parent="1" source="gNa3Diuc_Gz6c6CkLnG0-5" style="html=1;endArrow=open;dashed=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" target="gNa3Diuc_Gz6c6CkLnG0-7">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1650" y="740" />
+              <mxPoint x="2110" y="740" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-40" edge="1" parent="1" source="gNa3Diuc_Gz6c6CkLnG0-5" style="html=1;endArrow=open;dashed=1;rounded=0;edgeStyle=orthogonalEdgeStyle;entryX=0.75;entryY=1;entryDx=0;entryDy=0;" target="gNa3Diuc_Gz6c6CkLnG0-15">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1580" y="598" />
+              <mxPoint x="1580" y="1030" />
+              <mxPoint x="1075" y="1030" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-41" edge="1" parent="1" source="gNa3Diuc_Gz6c6CkLnG0-9" style="html=1;endArrow=open;dashed=1;rounded=0;edgeStyle=orthogonalEdgeStyle;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="gNa3Diuc_Gz6c6CkLnG0-21">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="550" y="520" />
+              <mxPoint x="770" y="520" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-42" edge="1" parent="1" source="gNa3Diuc_Gz6c6CkLnG0-9" style="html=1;endArrow=open;dashed=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" target="gNa3Diuc_Gz6c6CkLnG0-23">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="550" y="520" />
+              <mxPoint x="500" y="520" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-43" edge="1" parent="1" source="gNa3Diuc_Gz6c6CkLnG0-13" style="html=1;endArrow=open;dashed=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.25;exitY=0;exitDx=0;exitDy=0;" target="gNa3Diuc_Gz6c6CkLnG0-11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-44" edge="1" parent="1" source="gNa3Diuc_Gz6c6CkLnG0-13" style="html=1;endArrow=open;dashed=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" target="gNa3Diuc_Gz6c6CkLnG0-15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="gNa3Diuc_Gz6c6CkLnG0-45" edge="1" parent="1" source="gNa3Diuc_Gz6c6CkLnG0-17" style="html=1;endArrow=open;dashed=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" target="gNa3Diuc_Gz6c6CkLnG0-15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
