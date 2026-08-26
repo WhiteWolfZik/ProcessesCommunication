@@ -13,6 +13,8 @@
 #include <cstring>
 #include <thread>
 
+#include "SignalController.h"
+
 namespace consumer
 {
 
@@ -38,7 +40,8 @@ SharedRingBufferReader::~SharedRingBufferReader()
 	}
 }
 
-void SharedRingBufferReader::attach(const std::string& name)
+bool SharedRingBufferReader::attach(
+	const std::string& name, const common::SignalController& signals)
 {
 	std::int32_t fd{ -1 };
 	for (;;)
@@ -51,6 +54,10 @@ void SharedRingBufferReader::attach(const std::string& name)
 		if (errno != ENOENT)
 		{
 			failWithErrno("shm_open");
+		}
+		if (signals.isStopRequested())
+		{
+			return false;
 		}
 		std::this_thread::sleep_for(attachRetryInterval);
 	}
@@ -76,6 +83,7 @@ void SharedRingBufferReader::attach(const std::string& name)
 	control_ = control;
 	slots_ = std::span<const std::byte>(mapping_).subspan(sizeof(common::RingBufferControlBlock));
 	gate_.emplace(control.notify);
+	return true;
 }
 
 std::optional<Packet> SharedRingBufferReader::tryConsume()

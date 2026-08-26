@@ -12,6 +12,11 @@
 #include "PacketHeader.h"
 #include "RingBufferLayout.h"
 
+namespace common
+{
+class SignalController;
+}	 // namespace common
+
 namespace consumer
 {
 
@@ -50,8 +55,9 @@ public:
 	// Public interface.
 	//
 public:
-	//! Attaches to the named segment, retrying with backoff until it exists.
-	void attach(const std::string& name);
+	//! Attaches to the named segment, retrying with backoff until it exists
+	//! or signals reports a stop request. Returns false if aborted that way.
+	bool attach(const std::string& name, const common::SignalController& signals);
 	//! Returns the next packet if available, without blocking indefinitely.
 	std::optional<Packet> tryConsume();
 

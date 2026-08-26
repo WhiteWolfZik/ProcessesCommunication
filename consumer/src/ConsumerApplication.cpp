@@ -29,7 +29,11 @@ int ConsumerApplication::run()
 {
 	signals_.install();
 	keypress_.start();
-	reader_.attach(std::string{ common::ringBufferLayout::segmentName });
+	if (!reader_.attach(std::string{ common::ringBufferLayout::segmentName }, signals_))
+	{
+		keypress_.stop();
+		return 0;
+	}
 	reporterThread_.start();
 
 	while (!signals_.isStopRequested())
