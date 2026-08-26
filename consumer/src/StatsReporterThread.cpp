@@ -1,10 +1,19 @@
 #include "StatsReporterThread.h"
 
+#include <algorithm>
 #include <chrono>
 #include <iostream>
+#include <thread>
 
 namespace consumer
 {
+
+namespace
+{
+
+constexpr auto wakePollInterval{ std::chrono::milliseconds(100) };
+
+}	 // namespace
 
 StatsReporterThread::StatsReporterThread(
 	const StatsCollector& collector,
@@ -39,7 +48,14 @@ void StatsReporterThread::run()
 {
 	while (running_.load(std::memory_order_acquire))
 	{
-		std::this_thread::sleep_for(interval_);
+		auto remaining{ std::chrono::duration_cast<std::chrono::milliseconds>(interval_) };
+		while (remaining > std::chrono::milliseconds::zero()
+			   && running_.load(std::memory_order_acquire))
+		{
+			const auto step{ std::min(remaining, wakePollInterval) };
+			std::this_thread::sleep_for(step);
+			remaining -= step;
+		}
 
 		if (!running_.load(std::memory_order_acquire) || signals_.isPaused())
 		{
