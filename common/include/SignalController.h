@@ -40,9 +40,9 @@ private:
 	static void handleStop(const int signalNumber);
 
 	//
-	// Private data members.
+	// Protected data members.
 	//
-private:
+protected:
 	//! Shared pause flag, toggled from signal handlers.
 	static std::atomic<bool> paused_;
 	//! Shared stop-requested flag, set from signal handlers.
