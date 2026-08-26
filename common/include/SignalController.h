@@ -18,10 +18,12 @@ public:
 	// Public interface.
 	//
 public:
-	//! Registers the SIGUSR1/SIGUSR2 handlers with sigaction.
+	//! Registers the SIGUSR1/SIGUSR2/SIGINT/SIGTERM handlers with sigaction.
 	void install() const;
 	//! Returns whether a pause is currently in effect.
 	bool isPaused() const;
+	//! Returns whether a graceful shutdown has been requested.
+	bool isStopRequested() const;
 
 	//
 	// Private methods.
@@ -31,6 +33,8 @@ private:
 	static void handlePause(const int signalNumber);
 	//! SIGUSR2 handler: clears the pause flag.
 	static void handleResume(const int signalNumber);
+	//! SIGINT/SIGTERM handler: sets the stop-requested flag.
+	static void handleStop(const int signalNumber);
 
 	//
 	// Private data members.
@@ -38,6 +42,8 @@ private:
 private:
 	//! Shared pause flag, toggled from signal handlers.
 	static std::atomic<bool> paused_;
+	//! Shared stop-requested flag, set from signal handlers.
+	static std::atomic<bool> stopRequested_;
 };
 
 }	 // namespace common
