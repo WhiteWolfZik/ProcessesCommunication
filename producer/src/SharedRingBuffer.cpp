@@ -110,7 +110,8 @@ void SharedRingBuffer::publish(
 	}
 
 	const auto stride{ common::ringBufferLayout::slotStride(control.payloadSize) };
-	const auto index{ control.writeIndex.load(std::memory_order_relaxed) % control.capacity };
+	const auto writeIndexValue{ control.writeIndex.load(std::memory_order_relaxed) };
+	const auto index{ writeIndexValue % control.capacity };
 	std::byte* const slot{ slots_.data() + common::ringBufferLayout::slotOffset(index, stride) };
 
 	auto& slotHeader{ *reinterpret_cast<common::SlotHeader*>(slot) };
@@ -120,6 +121,7 @@ void SharedRingBuffer::publish(
 									+ sizeof(common::PacketHeader) };
 
 	slotHeader.version.fetch_add(1, std::memory_order_relaxed);
+	slotHeader.stampedIndex.store(writeIndexValue, std::memory_order_relaxed);
 	*packetHeader = header;
 	std::memcpy(packetPayload, payload.data(), payload.size());
 	slotHeader.version.fetch_add(1, std::memory_order_release);

@@ -4,9 +4,11 @@
 #include <chrono>
 #include <csignal>
 #include <cstdint>
+#include <set>
 #include <span>
 #include <string>
 #include <thread>
+#include <vector>
 
 #include <gtest/gtest.h>
 
@@ -66,18 +68,22 @@ TEST(RingBufferRoundTripTest, BasicSequentialPublishAndConsume)
 }
 
 /*
- * Brief: Overwrite-oldest under a burst larger than capacity never corrupts
- *        surviving data, and the resulting gap is detectable.
- * Given: A ring buffer sized for exactly 4 slots.
- * When:  20 packets are published back-to-back with no reads in between,
- *        then everything is drained.
- * Then:  Exactly 20 reads are returned (the reader re-reads overwritten
- *        slots rather than skipping them), every one independently
- *        checksums correctly (no torn read), none is ever flagged as a
- *        checksum or payload-size mismatch, and PacketValidator flags at
- *        least one SequenceGap from the resulting backward jump.
+ * Brief: Overwrite-oldest under a burst larger than capacity never
+ *        duplicates or corrupts data — only the packets that are still
+ *        physically present get delivered, each exactly once.
+ * Given: A ring buffer sized for exactly 4 slots. Three packets are
+ *        published and read normally first, so PacketValidator has an
+ *        established lastSequenceNumber_ before the burst hits.
+ * When:  20 more packets are published back-to-back with no reads in
+ *        between (far more than capacity), then everything is drained.
+ * Then:  Exactly capacity (4) more packets are delivered — the ones
+ *        actually still resident — each with a correct checksum and a
+ *        distinct sequenceNumber (no duplicate delivery), the first of
+ *        them is flagged as a SequenceGap (the skip is now detectable
+ *        because it isn't PacketValidator's very first packet), and no
+ *        packet is ever flagged as a checksum or payload-size mismatch.
  */
-TEST(RingBufferRoundTripTest, OverwriteOldestBurstKeepsSurvivingDataIntact)
+TEST(RingBufferRoundTripTest, OverwriteOldestBurstNeverDuplicatesOrCorruptsSurvivors)
 {
 	const auto name{ makeSegmentName("OverwriteBurst") };
 	constexpr std::size_t payloadSize{ 16 };
@@ -93,29 +99,23 @@ TEST(RingBufferRoundTripTest, OverwriteOldestBurstKeepsSurvivingDataIntact)
 	common::SignalController signals;
 	ASSERT_TRUE(reader.attach(name, signals));
 
-	constexpr std::uint64_t burstCount{ 20 };
-	for (std::uint64_t sequenceNumber{ 0 }; sequenceNumber < burstCount; ++sequenceNumber)
-	{
-		const auto packet{ tests::makeValidPacket(sequenceNumber, payloadSize) };
-		writer.publish(packet.header, std::span<const std::uint8_t>(packet.payload));
-	}
-
 	consumer::PacketValidator validator;
-	std::uint64_t receivedCount{ 0 };
+	std::vector<std::uint64_t> deliveredSequenceNumbers;
 	std::uint64_t gapCount{ 0 };
-	for (;;)
-	{
+
+	auto drainOne{ [&]() -> bool {
 		const auto received{ reader.tryConsume() };
 		if (!received.has_value())
 		{
-			break;
+			return false;
 		}
-		++receivedCount;
-		ASSERT_LE(receivedCount, burstCount) << "drain did not terminate as expected";
 
 		const auto recomputed{ common::ChecksumCalculator::compute(
 			received->header, std::as_bytes(std::span<const std::uint8_t>(received->payload))) };
-		EXPECT_EQ(recomputed, received->header.checksum) << "receivedCount=" << receivedCount;
+		EXPECT_EQ(recomputed, received->header.checksum)
+			<< "sequenceNumber=" << received->header.sequenceNumber;
+
+		deliveredSequenceNumbers.push_back(received->header.sequenceNumber);
 
 		const auto result{ validator.validate(
 			received->header, std::span<const std::uint8_t>(received->payload)) };
@@ -125,10 +125,40 @@ TEST(RingBufferRoundTripTest, OverwriteOldestBurstKeepsSurvivingDataIntact)
 		{
 			++gapCount;
 		}
+		return true;
+	} };
+
+	constexpr std::uint64_t warmupCount{ 3 };
+	for (std::uint64_t sequenceNumber{ 0 }; sequenceNumber < warmupCount; ++sequenceNumber)
+	{
+		const auto packet{ tests::makeValidPacket(sequenceNumber, payloadSize) };
+		writer.publish(packet.header, std::span<const std::uint8_t>(packet.payload));
+		ASSERT_TRUE(drainOne()) << "sequenceNumber=" << sequenceNumber;
 	}
 
-	EXPECT_EQ(receivedCount, burstCount);
-	EXPECT_GE(gapCount, 1U);
+	constexpr std::uint64_t burstCount{ 20 };
+	for (std::uint64_t sequenceNumber{ warmupCount }; sequenceNumber < warmupCount + burstCount;
+		 ++sequenceNumber)
+	{
+		const auto packet{ tests::makeValidPacket(sequenceNumber, payloadSize) };
+		writer.publish(packet.header, std::span<const std::uint8_t>(packet.payload));
+	}
+
+	const auto expectedTotal{ warmupCount + capacityTarget };
+	for (std::uint64_t attempt{ 0 };
+		 attempt < burstCount * 2 && deliveredSequenceNumbers.size() < expectedTotal;
+		 ++attempt)
+	{
+		drainOne();
+	}
+
+	ASSERT_EQ(deliveredSequenceNumbers.size(), expectedTotal);
+
+	std::set<std::uint64_t> distinct{ deliveredSequenceNumbers.begin(),
+									  deliveredSequenceNumbers.end() };
+	EXPECT_EQ(distinct.size(), deliveredSequenceNumbers.size()) << "duplicate delivery detected";
+
+	EXPECT_EQ(gapCount, 1U);
 }
 
 /*

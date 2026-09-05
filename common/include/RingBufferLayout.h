@@ -34,7 +34,10 @@ struct RingBufferControlBlock
 //! 8-byte aligned across every slot.
 struct alignas(8) SlotHeader
 {
+	//! Seqlock version counter.
 	std::atomic<std::uint32_t> version{ 0 };
+	//! writeIndex of the publish currently occupying this slot.
+	std::atomic<std::uint64_t> stampedIndex{ 0 };
 };
 
 namespace ringBufferLayout

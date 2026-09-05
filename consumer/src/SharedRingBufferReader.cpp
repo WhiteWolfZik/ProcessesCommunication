@@ -90,11 +90,18 @@ std::optional<Packet> SharedRingBufferReader::tryConsume()
 {
 	auto& control{ control_->get() };
 
-	const auto notifyValue{ control.notify.load(std::memory_order_acquire) };
-	const auto readIndex{ control.readIndex.load(std::memory_order_relaxed) };
 	const auto writeIndex{ control.writeIndex.load(std::memory_order_acquire) };
+	auto readIndex{ control.readIndex.load(std::memory_order_relaxed) };
+
+	if (writeIndex - readIndex > control.capacity)
+	{
+		readIndex = writeIndex - control.capacity;
+	}
+
 	if (readIndex == writeIndex)
 	{
+		control.readIndex.store(readIndex, std::memory_order_relaxed);
+		const auto notifyValue{ control.notify.load(std::memory_order_acquire) };
 		gate_->wait(notifyValue, pollTimeout);
 		return std::nullopt;
 	}
@@ -110,8 +117,21 @@ std::optional<Packet> SharedRingBufferReader::tryConsume()
 	const std::byte* const packetPayload{ slot + sizeof(common::SlotHeader)
 										  + sizeof(common::PacketHeader) };
 
+	const auto peekStamped{ slotHeader.stampedIndex.load(std::memory_order_acquire) };
+	if (peekStamped < readIndex)
+	{
+		control.readIndex.store(readIndex, std::memory_order_relaxed);
+		return std::nullopt;
+	}
+	if (peekStamped > readIndex)
+	{
+		control.readIndex.store(readIndex + 1, std::memory_order_relaxed);
+		return std::nullopt;
+	}
+
 	Packet result;
 	result.payload.resize(control.payloadSize);
+	std::uint64_t stampedIndex{ peekStamped };
 	for (;;)
 	{
 		const auto versionBefore{ slotHeader.version.load(std::memory_order_acquire) };
@@ -120,6 +140,7 @@ std::optional<Packet> SharedRingBufferReader::tryConsume()
 			continue;
 		}
 
+		stampedIndex = slotHeader.stampedIndex.load(std::memory_order_acquire);
 		result.header = *packetHeader;
 		std::memcpy(result.payload.data(), packetPayload, control.payloadSize);
 
@@ -130,7 +151,13 @@ std::optional<Packet> SharedRingBufferReader::tryConsume()
 		}
 	}
 
-	control.readIndex.fetch_add(1, std::memory_order_relaxed);
+	if (stampedIndex != readIndex)
+	{
+		control.readIndex.store(readIndex + 1, std::memory_order_relaxed);
+		return std::nullopt;
+	}
+
+	control.readIndex.store(readIndex + 1, std::memory_order_relaxed);
 	return result;
 }
 
