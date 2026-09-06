@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <atomic>
 #include <cerrno>
 #include <cstdio>
 #include <cstdlib>
@@ -123,9 +124,13 @@ void SharedRingBuffer::publish(
 	const auto wasEmpty{ writeIndexValue == control.readIndex.load(std::memory_order_relaxed) };
 
 	slotHeader.version.fetch_add(1, std::memory_order_relaxed);
+	std::atomic_thread_fence(std::memory_order_release);
+
 	slotHeader.stampedIndex.store(writeIndexValue, std::memory_order_relaxed);
 	*packetHeader = header;
 	std::memcpy(packetPayload, payload.data(), payload.size());
+
+	std::atomic_thread_fence(std::memory_order_release);
 	slotHeader.version.fetch_add(1, std::memory_order_release);
 
 	control.writeIndex.fetch_add(1, std::memory_order_release);

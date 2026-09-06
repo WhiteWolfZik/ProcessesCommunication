@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <atomic>
 #include <cerrno>
 #include <chrono>
 #include <cstdio>
@@ -138,11 +139,13 @@ bool SharedRingBufferReader::tryConsume(Packet& out)
 		{
 			continue;
 		}
+		std::atomic_thread_fence(std::memory_order_acquire);
 
 		stampedIndex = slotHeader.stampedIndex.load(std::memory_order_acquire);
 		out.header = *packetHeader;
 		std::memcpy(out.payload.data(), packetPayload, control.payloadSize);
 
+		std::atomic_thread_fence(std::memory_order_acquire);
 		const auto versionAfter{ slotHeader.version.load(std::memory_order_acquire) };
 		if (versionBefore == versionAfter)
 		{
