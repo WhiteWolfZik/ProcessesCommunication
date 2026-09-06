@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
 
 #include "CliOptions.h"
 #include "KeypressListener.h"
@@ -43,6 +44,8 @@ private:
 	common::KeypressListener keypress_;
 	//! Next sequence number to assign to a published packet.
 	std::uint64_t sequenceCounter_{ 0 };
+	//! Reused across publishes to avoid a heap allocation per packet.
+	std::vector<std::uint8_t> payloadBuffer_;
 };
 
 }	 // namespace producer

@@ -58,8 +58,10 @@ public:
 	//! Attaches to the named segment, retrying with backoff until it exists
 	//! or signals reports a stop request. Returns false if aborted that way.
 	bool attach(const std::string& name, const common::SignalController& signals);
-	//! Returns the next packet if available, without blocking indefinitely.
-	std::optional<Packet> tryConsume();
+	//! Writes the next packet into out if one is available, without blocking
+	//! indefinitely. Returns whether out was written; reuse the same out
+	//! across calls to avoid a per-packet allocation.
+	bool tryConsume(Packet& out);
 
 	//
 	// Private data members.

@@ -44,15 +44,14 @@ int ConsumerApplication::run()
 			continue;
 		}
 
-		auto packet{ reader_.tryConsume() };
-		if (!packet)
+		if (!reader_.tryConsume(packet_))
 		{
 			continue;
 		}
 
 		const auto result{ validator_.validate(
-			packet->header, std::span<const std::uint8_t>(packet->payload)) };
-		stats_.record(packet->header.payloadSize, result == ValidationResult::Valid);
+			packet_.header, std::span<const std::uint8_t>(packet_.payload)) };
+		stats_.record(packet_.header.payloadSize, result == ValidationResult::Valid);
 	}
 
 	reporterThread_.stop();

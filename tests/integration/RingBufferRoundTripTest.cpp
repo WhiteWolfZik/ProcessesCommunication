@@ -53,17 +53,17 @@ TEST(RingBufferRoundTripTest, BasicSequentialPublishAndConsume)
 	common::SignalController signals;
 	ASSERT_TRUE(reader.attach(name, signals));
 
+	consumer::Packet received;
 	constexpr std::uint64_t packetCount{ 20 };
 	for (std::uint64_t sequenceNumber{ 0 }; sequenceNumber < packetCount; ++sequenceNumber)
 	{
 		const auto packet{ tests::makeValidPacket(sequenceNumber, payloadSize) };
 		writer.publish(packet.header, std::span<const std::uint8_t>(packet.payload));
 
-		const auto received{ reader.tryConsume() };
-		ASSERT_TRUE(received.has_value()) << "sequenceNumber=" << sequenceNumber;
-		EXPECT_EQ(received->header.sequenceNumber, sequenceNumber);
-		EXPECT_EQ(received->header.checksum, packet.header.checksum);
-		EXPECT_EQ(received->payload, packet.payload);
+		ASSERT_TRUE(reader.tryConsume(received)) << "sequenceNumber=" << sequenceNumber;
+		EXPECT_EQ(received.header.sequenceNumber, sequenceNumber);
+		EXPECT_EQ(received.header.checksum, packet.header.checksum);
+		EXPECT_EQ(received.payload, packet.payload);
 	}
 }
 
@@ -100,25 +100,25 @@ TEST(RingBufferRoundTripTest, OverwriteOldestBurstNeverDuplicatesOrCorruptsSurvi
 	ASSERT_TRUE(reader.attach(name, signals));
 
 	consumer::PacketValidator validator;
+	consumer::Packet received;
 	std::vector<std::uint64_t> deliveredSequenceNumbers;
 	std::uint64_t gapCount{ 0 };
 
 	auto drainOne{ [&]() -> bool {
-		const auto received{ reader.tryConsume() };
-		if (!received.has_value())
+		if (!reader.tryConsume(received))
 		{
 			return false;
 		}
 
 		const auto recomputed{ common::ChecksumCalculator::compute(
-			received->header, std::as_bytes(std::span<const std::uint8_t>(received->payload))) };
-		EXPECT_EQ(recomputed, received->header.checksum)
-			<< "sequenceNumber=" << received->header.sequenceNumber;
+			received.header, std::as_bytes(std::span<const std::uint8_t>(received.payload))) };
+		EXPECT_EQ(recomputed, received.header.checksum)
+			<< "sequenceNumber=" << received.header.sequenceNumber;
 
-		deliveredSequenceNumbers.push_back(received->header.sequenceNumber);
+		deliveredSequenceNumbers.push_back(received.header.sequenceNumber);
 
 		const auto result{ validator.validate(
-			received->header, std::span<const std::uint8_t>(received->payload)) };
+			received.header, std::span<const std::uint8_t>(received.payload)) };
 		EXPECT_NE(result, consumer::ValidationResult::ChecksumMismatch);
 		EXPECT_NE(result, consumer::ValidationResult::PayloadSizeMismatch);
 		if (result == consumer::ValidationResult::SequenceGap)
@@ -197,20 +197,20 @@ TEST(RingBufferRoundTripTest, ConcurrentWriterAndReaderNeverProduceTornReads)
 		}
 	});
 
+	consumer::Packet received;
 	std::uint64_t receivedCount{ 0 };
 	std::uint64_t checksumFailures{ 0 };
 	while (receivedCount < publishCount)
 	{
-		const auto received{ reader.tryConsume() };
-		if (!received.has_value())
+		if (!reader.tryConsume(received))
 		{
 			continue;
 		}
 		++receivedCount;
 
 		const auto recomputed{ common::ChecksumCalculator::compute(
-			received->header, std::as_bytes(std::span<const std::uint8_t>(received->payload))) };
-		if (recomputed != received->header.checksum)
+			received.header, std::as_bytes(std::span<const std::uint8_t>(received.payload))) };
+		if (recomputed != received.header.checksum)
 		{
 			++checksumFailures;
 		}

@@ -120,6 +120,8 @@ void SharedRingBuffer::publish(
 	std::byte* const packetPayload{ slot + sizeof(common::SlotHeader)
 									+ sizeof(common::PacketHeader) };
 
+	const auto wasEmpty{ writeIndexValue == control.readIndex.load(std::memory_order_relaxed) };
+
 	slotHeader.version.fetch_add(1, std::memory_order_relaxed);
 	slotHeader.stampedIndex.store(writeIndexValue, std::memory_order_relaxed);
 	*packetHeader = header;
@@ -128,7 +130,10 @@ void SharedRingBuffer::publish(
 
 	control.writeIndex.fetch_add(1, std::memory_order_release);
 	control.notify.fetch_add(1, std::memory_order_relaxed);
-	gate_->wake();
+	if (wasEmpty)
+	{
+		gate_->wake();
+	}
 }
 
 }	 // namespace producer

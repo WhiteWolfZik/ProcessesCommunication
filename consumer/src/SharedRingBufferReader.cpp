@@ -86,7 +86,7 @@ bool SharedRingBufferReader::attach(
 	return true;
 }
 
-std::optional<Packet> SharedRingBufferReader::tryConsume()
+bool SharedRingBufferReader::tryConsume(Packet& out)
 {
 	auto& control{ control_->get() };
 
@@ -103,7 +103,7 @@ std::optional<Packet> SharedRingBufferReader::tryConsume()
 		control.readIndex.store(readIndex, std::memory_order_relaxed);
 		const auto notifyValue{ control.notify.load(std::memory_order_acquire) };
 		gate_->wait(notifyValue, pollTimeout);
-		return std::nullopt;
+		return false;
 	}
 
 	const auto stride{ common::ringBufferLayout::slotStride(control.payloadSize) };
@@ -121,16 +121,15 @@ std::optional<Packet> SharedRingBufferReader::tryConsume()
 	if (peekStamped < readIndex)
 	{
 		control.readIndex.store(readIndex, std::memory_order_relaxed);
-		return std::nullopt;
+		return false;
 	}
 	if (peekStamped > readIndex)
 	{
 		control.readIndex.store(readIndex + 1, std::memory_order_relaxed);
-		return std::nullopt;
+		return false;
 	}
 
-	Packet result;
-	result.payload.resize(control.payloadSize);
+	out.payload.resize(control.payloadSize);
 	std::uint64_t stampedIndex{ peekStamped };
 	for (;;)
 	{
@@ -141,8 +140,8 @@ std::optional<Packet> SharedRingBufferReader::tryConsume()
 		}
 
 		stampedIndex = slotHeader.stampedIndex.load(std::memory_order_acquire);
-		result.header = *packetHeader;
-		std::memcpy(result.payload.data(), packetPayload, control.payloadSize);
+		out.header = *packetHeader;
+		std::memcpy(out.payload.data(), packetPayload, control.payloadSize);
 
 		const auto versionAfter{ slotHeader.version.load(std::memory_order_acquire) };
 		if (versionBefore == versionAfter)
@@ -154,11 +153,11 @@ std::optional<Packet> SharedRingBufferReader::tryConsume()
 	if (stampedIndex != readIndex)
 	{
 		control.readIndex.store(readIndex + 1, std::memory_order_relaxed);
-		return std::nullopt;
+		return false;
 	}
 
 	control.readIndex.store(readIndex + 1, std::memory_order_relaxed);
-	return result;
+	return true;
 }
 
 }	 // namespace consumer

@@ -40,6 +40,7 @@ int ProducerApplication::run()
 		std::string{ common::ringBufferLayout::segmentName },
 		options_.ringBufferBytes(),
 		options_.payloadSize());
+	payloadBuffer_.resize(options_.payloadSize());
 
 	while (!signals_.isStopRequested())
 	{
@@ -49,16 +50,16 @@ int ProducerApplication::run()
 			continue;
 		}
 
-		const auto payload{ generator_.generate(options_.payloadSize()) };
+		generator_.generate(std::span<std::uint8_t>(payloadBuffer_));
 
 		common::PacketHeader header{};
 		header.sequenceNumber = sequenceCounter_++;
 		header.timestampNs = nowNanoseconds();
-		header.payloadSize = static_cast<std::uint32_t>(payload.size());
+		header.payloadSize = static_cast<std::uint32_t>(payloadBuffer_.size());
 		header.checksum = common::ChecksumCalculator::compute(
-			header, std::as_bytes(std::span<const std::uint8_t>(payload)));
+			header, std::as_bytes(std::span<const std::uint8_t>(payloadBuffer_)));
 
-		buffer_.publish(header, std::span<const std::uint8_t>(payload));
+		buffer_.publish(header, std::span<const std::uint8_t>(payloadBuffer_));
 	}
 
 	keypress_.stop();

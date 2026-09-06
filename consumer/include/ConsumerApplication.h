@@ -45,6 +45,8 @@ private:
 	common::KeypressListener keypress_;
 	//! Background statistics printer.
 	StatsReporterThread reporterThread_;
+	//! Reused across tryConsume() calls to avoid a heap allocation per packet.
+	Packet packet_;
 };
 
 }	 // namespace consumer

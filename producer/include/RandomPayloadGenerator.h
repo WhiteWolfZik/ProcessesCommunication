@@ -1,9 +1,8 @@
 #pragma once
 
-#include <cstddef>
 #include <cstdint>
 #include <random>
-#include <vector>
+#include <span>
 
 namespace producer
 {
@@ -21,8 +20,8 @@ public:
 	// Public interface.
 	//
 public:
-	//! Returns a buffer of size pseudo-random bytes.
-	std::vector<std::uint8_t> generate(const std::size_t size);
+	//! Fills out with pseudo-random bytes.
+	void generate(const std::span<std::uint8_t> out);
 
 	//
 	// Private data members.
@@ -30,8 +29,6 @@ public:
 private:
 	//! Random number engine, seeded once at construction.
 	std::mt19937_64 rng_;
-	//! Uniform distribution over a single byte's value range.
-	std::uniform_int_distribution<int> byteDistribution_;
 };
 
 }	 // namespace producer

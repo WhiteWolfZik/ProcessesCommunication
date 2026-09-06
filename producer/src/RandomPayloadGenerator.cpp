@@ -1,22 +1,29 @@
 #include "RandomPayloadGenerator.h"
 
+#include <cstring>
+
 namespace producer
 {
 
 RandomPayloadGenerator::RandomPayloadGenerator()
 	: rng_{ std::random_device{}() }
-	, byteDistribution_{ 0, 255 }
 {
 }
 
-std::vector<std::uint8_t> RandomPayloadGenerator::generate(const std::size_t size)
+void RandomPayloadGenerator::generate(const std::span<std::uint8_t> out)
 {
-	std::vector<std::uint8_t> payload(size);
-	for (auto& byte : payload)
+	std::size_t written{ 0 };
+	while (written + sizeof(std::uint64_t) <= out.size())
 	{
-		byte = static_cast<std::uint8_t>(byteDistribution_(rng_));
+		const std::uint64_t word{ rng_() };
+		std::memcpy(out.data() + written, &word, sizeof(word));
+		written += sizeof(word);
 	}
-	return payload;
+	if (written < out.size())
+	{
+		const std::uint64_t word{ rng_() };
+		std::memcpy(out.data() + written, &word, out.size() - written);
+	}
 }
 
 }	 // namespace producer
